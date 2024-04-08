@@ -124,7 +124,8 @@
 #         return title, sentences, words
 
 import spacy
-from textClasses import Title, Sentence, Word
+
+from app.summarizer.textClasses import Title, Sentence, Word
 
 
 class Preprocessor:
@@ -170,11 +171,26 @@ class Preprocessor:
         Returns:
             list: A list containing the title, sentences, and words of the preprocessed text.
         """
-        while text[0] == "\n":
-            text = text[1:]
 
+        # Trim leading newlines
+        text = text.lstrip('\n')
+
+        # Attempt to split the text into title and body
         text_split = text.split('\n', 1)
-        title_text, body_text = text_split[0], text_split[1]
+
+        if len(text_split) == 2:
+            # If text naturally splits into title and body
+            title_text, body_text = text_split
+        elif len(text_split) == 1:
+            # If there's only one part, take the first 10 words as the title
+            body_text = text_split[0]
+            # Tokenize the body text and take the first 10 words as the title
+            body_tokens = self.nlp(body_text)
+            title_text = ' '.join([token.text for token in body_tokens[:10]])
+        else:
+            # Fallback for unexpected cases (e.g., empty string)
+            title_text = "Untitled"
+            body_text = ""
 
         title = Title(title_text, self.lemmatize_and_filter(title_text))
         sentences = []
@@ -193,5 +209,3 @@ class Preprocessor:
                 sentences.append(sentence)
 
         return title, sentences, words
-
-

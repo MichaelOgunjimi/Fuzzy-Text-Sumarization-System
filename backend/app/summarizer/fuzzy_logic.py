@@ -1,6 +1,6 @@
 import numpy
 
-import rules as rl
+import app.summarizer.rules as rl
 
 
 class FuzzyLogicSummarizer:
