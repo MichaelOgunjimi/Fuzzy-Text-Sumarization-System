@@ -1,144 +1,178 @@
 import os
+import sys
 
-from app import db
 from app.models.models import Text, Summary
 from app.summarizer.text_summarizer import TextSummarizer
 from app.utils.helpers import allowed_file, read_text_from_file, get_or_generate_percentage
-from flask import Blueprint, request, jsonify, current_app, abort
+from flask import Blueprint, request, jsonify, current_app
 from flask_cors import cross_origin
 from werkzeug.utils import secure_filename
 
 bp = Blueprint('routes', __name__, url_prefix='/api/v1')
 
 
+@bp.route('/', methods=['GET'])
 @bp.route('/home', methods=['GET'])
 @cross_origin()
 def home():
-    """Simple endpoint to check API status.
-    Returns:
-        JSON response with a 'message' key and 'API is up and running!' value.
     """
-    return jsonify({'message': 'API is up and running!'}), 200
+    Endpoint to check if the server is running.
+
+    Returns:
+        JSON response indicating that the server is running.
+    """
+    return jsonify({"message": "Server is running"})
 
 
 @bp.route('/texts', methods=['GET'])
 @cross_origin()
-def get_texts():
+def get_all_texts():
+    """
+    Endpoint to retrieve all texts.
+
+    Returns:
+        JSON response containing a list of all texts with first 20 characters.
+    """
+    texts = Text.objects.all()
+    texts_data = [
+        {
+            'id': str(text.id),
+            'text': text.content[:20] + '...' if len(text.content) > 20 else text.content,
+        }
+        for text in texts
+    ]
+    return jsonify(texts_data)
+
+
+@bp.route('/text/summary/<text_id>', methods=['GET'])
+@cross_origin()
+def get_text_by_id(text_id):
+    """
+    Endpoint to retrieve a text by its ID.
+
+    Args:
+        text_id: The ID of the text to retrieve.
+
+    Returns:
+        JSON response containing the text with the specified ID.
+    """
+    text = Text.get_text_by_id(text_id)
+    if text:
+        return jsonify({
+            'id': str(text.id),
+            'text': text.content,
+            'user_uid': text.user_uid,
+            'uploaded_filename': text.uploaded_filename,
+            'percentage': text.percentage,
+            'summaries': [
+                {
+                    'id': str(summary.id),
+                    'text': summary.content,
+                    'created_at': summary.created_at.isoformat(),
+                    'percentage': summary.percentage,
+                    'words': summary.words
+                } for summary in text.summaries
+            ]
+        })
+    else:
+        return jsonify({"error": "Text not found"}), 404
+
+
+@bp.route('/texts/user/', methods=['GET'])
+@cross_origin()
+def get_user_texts_and_summaries():
+    """
+    Endpoint to retrieve all texts and their associated summaries for the user.
+
+    Returns:
+        JSON response containing a list of texts and their summaries for the user.
+    """
+    user_uid = request.headers.get('X-User-UID')
+    if not user_uid:
+        return jsonify({"error": "X-User-UID header is missing"}), 400
+
+    # Fetch all texts for the user
+    user_texts = Text.get_texts_by_user(user_uid)
+
+    if not user_texts:
+        return jsonify({"error": "No texts found for the user"}), 404
+
+    # sys.stdout.write(f'${user_uid} has {len(user_texts)} texts\n')
+
+    texts_data = [
+        {
+            'id': str(text.id),
+            'title': text.content[:50] + '...' if len(text.content) > 50 else text.content,
+            'created_at': text.created_at.isoformat(),
+        }
+        for text in user_texts
+    ]
+
+    # Construct and return the JSON response
+    return jsonify(texts_data)
+
+
+@bp.route('/texts-summaries', methods=['GET'])
+@cross_origin()
+def get_texts_summaries():
     """
     Endpoint to retrieve all texts along with their summaries.
 
     Returns:
         JSON response containing a list of texts and their summaries.
     """
-    # Fetch all texts from the database
-    all_texts = Text.query.all()
+    texts = Text.objects.all()
 
-    # Prepare the data for JSON serialization
-    texts_data = []
-    for text in all_texts:
-        summaries = Summary.query.filter_by(text_id=text.id).all()
-        summaries_data = [{
-            'id': summary.id,
-            'content': summary.content,
-            'created_at': summary.created_at.isoformat()
-        } for summary in summaries]
-
-        texts_data.append({
-            'id': text.id,
-            'content': text.content,
-            'summaries': summaries_data
-        })
-
-    # Construct and return the JSON response
+    texts_data = [
+        {
+            'id': str(text.id),
+            'text': text.content,
+            'user_uid': text.user_uid,
+            'created_at': text.created_at.isoformat(),
+            'summaries': [
+                {
+                    'id': str(summary.id),
+                    'text': summary.content,
+                    'created_at': summary.created_at.isoformat(),
+                    'percentage': summary.percentage,
+                    'words': summary.words
+                }
+                for summary in text.summaries
+            ]
+        }
+        for text in texts
+    ]
     return jsonify(texts_data)
 
 
-@bp.route('/texts/user', methods=['GET'])
-@cross_origin()
-def get_user_texts():
-    """
-    Endpoint to retrieve all texts uploaded by a specific user, identified by a UID in request headers.
-
-    Returns:
-        JSON response containing a list of texts uploaded by the user.
-    """
-    user_uid = request.headers.get('X-User-UID')
-    if not user_uid:
-        return jsonify({"error": "User UID not provided"}), 400
-
-    # Correctly filter texts by user UID
-    all_texts = Text.query.filter_by(user_uid=user_uid).all()
-
-    # Prepare the data for JSON serialization
-    texts_data = [{'id': text.id, 'content': text.content} for text in all_texts]
-
-    return jsonify(texts_data)
-
-
-@bp.route('/texts/user/<int:text_id>', methods=['GET'])
-@cross_origin()
-def delete_user_text(text_id):
-    """
-    Endpoint to delete a text uploaded by a specific user, identified by a UID in request headers.
-
-    Parameters:
-        text_id (int): The ID of the text to be deleted.
-
-    Returns:
-        JSON response indicating the success or failure of the deletion.
-    """
-    user_uid = request.headers.get('X-User-UID')
-    if not user_uid:
-        return jsonify({"error": "User UID not provided"}), 400
-
-    # Correctly filter texts by user UID
-    text = Text.query.filter_by(id=text_id, user_uid=user_uid).first()
-    if not text:
-        return jsonify({"error": "Text not found"}), 404
-
-    db.session.delete(text)
-    db.session.commit()
-
-    return jsonify({"message": "Text deleted successfully"}), 200
-
-
-@bp.route('/texts/<int:text_id>/summaries', methods=['GET'])
+@bp.route('/texts/<text_id>/summaries', methods=['GET'])
 @cross_origin()
 def get_text_summaries(text_id):
     """
     Endpoint to retrieve a text and its associated summaries by ID.
 
     Parameters:
-        text_id (int): The ID of the text to be retrieved.
+        text_id (str): The ID of the text to be retrieved.
 
     Returns:
         JSON response containing the text and its summaries.
     """
-    # Fetch the text by ID
-    text = Text.query.get(text_id)
-    if not text:
-        abort(404, description=f"Text with ID {text_id} not found.")
-
-    # Check if there are any summaries for the text
-    if not text.summaries:
-        abort(404, description=f"No summaries found for text with ID {text_id}.")
-
-    # Fetch all summaries associated with this text
-    summaries = Summary.query.filter_by(text_id=text_id).all()
-
-    # Prepare the summaries for JSON serialization
-    summaries_data = [{'id': summary.id, 'text': summary.content, 'created_at': summary.created_at.isoformat()} for
-                      summary in summaries]
-
-    # Construct and return the JSON response
-    return jsonify({
-        'text': {
-            'id': text.id,
-            'content': text.content,
-            'created_at': text.created_at.isoformat(),
-            'summaries': summaries_data
-        }
-    })
+    text = Text.get_text_with_summaries(text_id)
+    text_summaries = [{
+        'id': str(summary.id),
+        'text': summary.content,
+        'created_at': summary.created_at.isoformat(),
+        'percentage': summary.percentage,
+        'words': summary.words
+    } for summary in text.summaries]
+    if text:
+        return jsonify({
+            'id': str(text.id),
+            'text': text.content,
+            'summaries': text_summaries
+        })
+    else:
+        return jsonify({"error": "Text not found"}), 404
 
 
 @bp.route('/upload', methods=['POST'])
@@ -166,66 +200,123 @@ def upload_file():
     # Read the text from the file
     text_content = read_text_from_file(filepath).replace('\n', ' ')
 
-    # Here, you would process the file to extract text and potentially save it using your models
-    return jsonify({"message": "File uploaded successfully", "filename": filename, "text": text_content}), 201
+    # Create a new Text document and save it to the database
+    user_uid = request.headers.get('X-User-UID')
+    percentage = get_or_generate_percentage(int(request.form.get('percentage')))
+    text = Text.create_text(content=text_content, user_uid=user_uid, uploaded_filename=filename, percentage=percentage)
+
+    # Use the TextSummarizer to summarize the fetched text
+    summarizer = TextSummarizer(text.content, percentage, 8)
+    summary = summarizer.summarize()
+    words = len(summary.split())
+
+    # Save the summary to the database, linked to the original text
+    new_summary = Summary.create_summary(
+        content=summary,
+        text=text,
+        percentage=percentage,
+        words=words
+    )
+
+    # Add the summary to the original text's list of summaries
+    text.add_summary(new_summary)
+
+    # Delete the file from the uploads folder
+    os.remove(filepath)
+
+    return jsonify({
+        "message": "File uploaded successfully",
+        "id": str(text.id)
+    }), 201
 
 
-@bp.route('/summarize', methods=['POST'], endpoint='summarize_post')
+@bp.route('/summarize', methods=['POST'], endpoint='summarize')
 @cross_origin()
 def summarize():
     """
-    Endpoint to summarize a given text.
+    Endpoint to summarize a text.
+
+    Returns:
+        JSON response of the text id
+    """
+    user_uid = request.headers.get('X-User-UID')
+    data = request.get_json()  # Get data as JSON
+    text_content = data.get('text')
+    # get or generate percentage
+    percentage = get_or_generate_percentage(data.get('percentage', None))
+
+    if not text_content:
+        return jsonify({"error": "No text provided"}), 400
+
+    # Create a new Text document and save it to the database
+    text = Text.create_text(content=text_content, user_uid=user_uid, percentage=percentage)
+
+    # Use the TextSummarizer to summarize the fetched text
+    summarizer = TextSummarizer(text.content, percentage, 8)
+    summary = summarizer.summarize()
+    words = len(summary.split())
+
+    # Save the summary to the database, linked to the original text
+    new_summary = Summary.create_summary(
+        content=summary,
+        text=text,
+        percentage=percentage,
+        words=words
+    )
+
+    # Add the summary to the original text's list of summaries
+    text.add_summary(new_summary)
+
+    return jsonify({
+        "message": "Text summarized successfully",
+        "id": str(text.id)
+    }), 201
+
+
+@bp.route('/summarize-again/<text_id>', methods=['POST'], endpoint='summarize_again')
+@cross_origin()
+def summarize(text_id):
+    """
+    Endpoint to summarize a text with a given ID again.
+
+    Parameters:
+        text_id (str): The ID of the text to be summarized again.
 
     Returns:
         JSON response containing the generated summary.
     """
     data = request.get_json()
-    user_uid = request.headers.get('X-User-UID')
-    percentage = get_or_generate_percentage(data.get('percentage'))
-    text_content = data.get('text', '')
-
-    # Assuming TextSummarizer has a method summarize() that takes text content and returns a summary
-    summarizer = TextSummarizer(text_content, percentage, 8)
-    summary = summarizer.summarize()
-
-    # Save the original text and its summary to the database
-    new_text = Text(content=text_content, user_uid=user_uid)
-    new_summary = Summary(content=summary, text=new_text)
-    db.session.add(new_text)
-    db.session.add(new_summary)
-    db.session.commit()
-
-    return jsonify({"summary": summary})
-
-
-@bp.route('/summarize/<int:text_id>', methods=['POST'], endpoint='summarize_with_id')
-@cross_origin()
-def summarize(text_id):
-    """
-    Endpoint to summarize a text with a given ID.
-
-    Parameters:
-        text_id (int): The ID of the text to be summarized.
-
-    Returns:
-        JSON response containing the generated summary.
-    """
-    # Optional percentage parameter, defaults to 50 if not provided
-    data = request.get_json() or {}
-    percentage = get_or_generate_percentage(data.get('percentage'))
 
     # Fetch the original text using the provided text ID
-    original_text = Text.query.get(text_id)
+    original_text = Text.get_text_by_id(text_id)
     if not original_text:
         return jsonify({"error": "Text not found"}), 404
+
+    if data.get('percentage'):
+        percentage = data.get('percentage')
+    elif original_text.percentage:
+        percentage = original_text.percentage
+    else:
+        percentage = get_or_generate_percentage(data.get('percentage'))
 
     # Use the TextSummarizer to summarize the fetched text
     summarizer = TextSummarizer(original_text.content, percentage, 8)
     summary = summarizer.summarize()
+    words = len(summary.split())
 
     # Save the summary to the database, linked to the original text
-    new_summary = Summary(content=summary, text_id=text_id)
-    db.session.add(new_summary)
-    db.session.commit()
+    summary = Summary.create_summary(content=summary, percentage=percentage, words=words, text=original_text)
 
-    return jsonify({"text_id": text_id, "summary": summary})
+    # Add the summary to the original text's list of summaries
+    original_text.add_summary(summary)
+
+    # Return the summary as a JSON response
+    return jsonify({
+        "summary": {
+            "id": str(summary.id),
+            "text": summary.content,
+            "created_at": summary.created_at.isoformat(),
+            "percentage": summary.percentage,
+            "words": summary.words
+        }
+    })

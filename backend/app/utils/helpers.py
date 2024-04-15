@@ -104,6 +104,6 @@ def get_or_generate_percentage(percentage):
     Returns:
     - int: The original percentage or a randomly generated percentage between 30 and 80.
     """
-    if percentage is None:
+    if percentage is None or percentage == 0:
         return random.randint(30, 80)
     return percentage
