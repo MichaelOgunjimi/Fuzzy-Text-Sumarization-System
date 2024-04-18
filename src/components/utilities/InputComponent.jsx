@@ -57,13 +57,9 @@ const InputComponent = ({ file }) => {
     setIsLoading(true);
     setMessage('Uploading...');
     try {
-      const response = await axios.post(
-        'https://www.api.lingosummar.com/api/v1/upload',
-        formData,
-        {
-          headers: { ...headers, 'Content-Type': 'multipart/form-data' },
-        },
-      );
+      const response = await axios.post('/api/v1/upload', formData, {
+        headers: { ...headers, 'Content-Type': 'multipart/form-data' },
+      });
       setMessage(response.data.message);
       // Navigate to the summary view page after receiving the response
       if (response.data.id) {
@@ -82,7 +78,7 @@ const InputComponent = ({ file }) => {
     setMessage('Summarizing...');
     try {
       const response = await axios.post(
-        'https://www.api.lingosummar.com/api/v1/summarize',
+        '/api/v1/summarize',
         { text, percentage: Number(percentage) },
         { headers },
       );

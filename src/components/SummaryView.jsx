@@ -32,9 +32,7 @@ const SummaryView = ({ summaries }) => {
   async function fetchSummary(id) {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `https://www.api.lingosummar.com/api/v1/text/summary/${id}`,
-      );
+      const response = await fetch(`/api/v1/text/summary/${id}`);
       if (!response.ok) throw new Error('Failed to fetch summary');
       const data = await response.json();
       setCurrentSummary(data);
@@ -48,14 +46,11 @@ const SummaryView = ({ summaries }) => {
   async function summarizeAgain() {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `https://www.api.lingosummar.com/api/v1/summarize-again/${id}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ percentage: Number(percentage) }),
-        },
-      );
+      const response = await fetch(`/api/v1/summarize-again/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ percentage: Number(percentage) }),
+      });
       if (!response.ok) throw new Error('Failed to fetch summary');
       const data = await response.json();
       handleSummarizeAgain(data.summary);
@@ -67,7 +62,7 @@ const SummaryView = ({ summaries }) => {
   }
 
   const handleTypingComplete = () => {
-    setTypingComplete(!!typingComplete);
+    setTypingComplete((prevState) => !prevState);
   };
 
   return (
@@ -129,40 +124,44 @@ const MainContent = ({
           className="flex-1 overflow-auto scrollbar h-full bg-background-100 p-5"
           ref={summaryContentRef}
         >
-          {currentSummary && (
-            <>
-              <Summary
-                summary={{
-                  text: currentSummary.text,
-                  created_at: currentSummary.created_at,
-                  uploaded_filename: currentSummary.uploaded_filename,
-                }}
-                isOriginal={true}
-              />
-              {currentSummary.summaries &&
-                currentSummary.summaries.map((summary, index) => {
-                  const isLatestOrOnly =
-                    (lastUpdated &&
-                      summary.timestamp &&
-                      new Date(summary.timestamp).getTime() ===
-                        lastUpdated.getTime()) ||
-                    currentSummary.summaries.length === 1;
+          {currentSummary.length === 0 ? (
+            <Spinner size={3} />
+          ) : (
+            currentSummary && (
+              <>
+                <Summary
+                  summary={{
+                    text: currentSummary.text,
+                    created_at: currentSummary.created_at,
+                    uploaded_filename: currentSummary.uploaded_filename,
+                  }}
+                  isOriginal={true}
+                />
+                {currentSummary.summaries &&
+                  currentSummary.summaries.map((summary, index) => {
+                    const isLatestOrOnly =
+                      (lastUpdated &&
+                        summary.timestamp &&
+                        new Date(summary.timestamp).getTime() ===
+                          lastUpdated.getTime()) ||
+                      currentSummary.summaries.length === 1;
 
-                  return isLatestOrOnly ? (
-                    <TypingSummary
-                      key={summary.id}
-                      summary={summary}
-                      onTypingComplete={typingComplete}
-                    />
-                  ) : (
-                    <Summary
-                      key={summary.id}
-                      summary={summary}
-                      isOriginal={false}
-                    />
-                  );
-                })}
-            </>
+                    return isLatestOrOnly ? (
+                      <TypingSummary
+                        key={summary.id}
+                        summary={summary}
+                        onTypingComplete={typingComplete}
+                      />
+                    ) : (
+                      <Summary
+                        key={summary.id}
+                        summary={summary}
+                        isOriginal={false}
+                      />
+                    );
+                  })}
+              </>
+            )
           )}
           {isLoading && (
             <div className="flex items-center justify-start gap-4 align-center">

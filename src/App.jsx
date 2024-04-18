@@ -10,26 +10,27 @@ const App = () => {
   const [isSavingEnabled, setIsSavingEnabled] = useState(false);
   const [userUid, setUserUid] = useState('');
   const [summaries, setSummaries] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchSummaries = async () => {
+    setIsLoading((prevState) => !prevState);
     try {
       if (!userUid) throw new Error('User UID is not set.');
-      const response = await fetch(
-        'https://www.api.lingosummar.com/api/v1/texts/user',
-        {
-          method: 'GET',
-          headers: {
-            'X-User-UID': userUid,
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch('/api/v1/texts/user', {
+        method: 'GET',
+        headers: {
+          'X-User-UID': userUid,
+          'Content-Type': 'application/json',
         },
-      );
+      });
       if (!response.ok) throw new Error('Failed to fetch summaries');
       const data = await response.json();
       setSummaries(data);
     } catch (err) {
       console.error('Error fetching summaries:', err);
       // Optionally update the UI to show an error message
+    } finally {
+      setIsLoading((prevState) => !prevState);
     }
   };
 
@@ -57,6 +58,7 @@ const App = () => {
             <SummaryForm
               summaries={summaries}
               isSavingEnabled={isSavingEnabled}
+              isLoading={isLoading}
             />
           }
         />

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom'; // Import Link for navigation
 import { useDropzone } from 'react-dropzone';
-import InputComponent from './utilities/InputComponent.jsx'; // Importing the existing InputComponent
+import InputComponent from './utilities/InputComponent.jsx';
+import Spinner from './utilities/Spinner.jsx'; // Importing the existing InputComponent
 
 const groupSummariesByDate = (summaries) => {
   const today = new Date();
@@ -27,7 +28,7 @@ const groupSummariesByDate = (summaries) => {
   return groups;
 };
 
-const SummaryForm = ({ summaries, isSavingEnabled }) => {
+const SummaryForm = ({ summaries, isSavingEnabled, isLoading }) => {
   const [file, setFile] = useState(null); // State to hold the dropped file
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -107,6 +108,10 @@ const SummaryForm = ({ summaries, isSavingEnabled }) => {
               </div>
             ),
         )
+      ) : isLoading ? (
+        <Spinner />
+      ) : summaries.length === 0 ? (
+        <p>You have no summaries.</p>
       ) : (
         <p className="text-lg text-primary-600 mt-6 font-semibold">
           Previous history is disabled. You can use the toggle above to enable
