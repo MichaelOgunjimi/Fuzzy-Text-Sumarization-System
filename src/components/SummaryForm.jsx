@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom'; // Import Link for navigation
 import { useDropzone } from 'react-dropzone';
-import InputComponent from './InputComponent'; // Importing the existing InputComponent
+import InputComponent from './utilities/InputComponent.jsx'; // Importing the existing InputComponent
 
 const groupSummariesByDate = (summaries) => {
   const today = new Date();

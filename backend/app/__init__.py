@@ -9,14 +9,14 @@ db = MongoEngine()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    CORS(app)
+    CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
     db.init_app(app)
 
     # Optional: Test database connection
     with app.app_context():
         try:
             # Attempt a simple operation to check connectivity
-            db.connection.admin.command('ismaster')
+            db.connection.admin.command('ping')
         except Exception as e:
             app.logger.error(f"Could not connect to MongoDB: {e}")
 

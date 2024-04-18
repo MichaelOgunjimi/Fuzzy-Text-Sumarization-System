@@ -64,6 +64,7 @@ def get_text_by_id(text_id):
             'user_uid': text.user_uid,
             'uploaded_filename': text.uploaded_filename,
             'percentage': text.percentage,
+            'created_at': text.created_at.isoformat(),
             'summaries': [
                 {
                     'id': str(summary.id),
@@ -294,8 +295,6 @@ def summarize(text_id):
 
     if data.get('percentage'):
         percentage = data.get('percentage')
-    elif original_text.percentage:
-        percentage = original_text.percentage
     else:
         percentage = get_or_generate_percentage(data.get('percentage'))
 

@@ -55,7 +55,7 @@ const Header = () => {
           className="w-8 h-8 object-contain cursor-pointer"
         />
         {isMenuVisible && (
-          <div className="absolute right-0 mt-1 p-3 bg-white shadow-lg rounded-lg w-48 border border-background-300">
+          <div className="absolute right-0 mt-1 p-3 bg-white shadow-lg rounded-lg w-48 border bg-background-800 text-text-600 z-10">
             <p className="text-text-700">
               Would you like to save your summary?
             </p>

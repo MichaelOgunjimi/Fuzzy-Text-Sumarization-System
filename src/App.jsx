@@ -14,16 +14,18 @@ const App = () => {
   const fetchSummaries = async () => {
     try {
       if (!userUid) throw new Error('User UID is not set.');
-      const response = await fetch('/api/v1/texts/user', {
-        method: 'GET',
-        headers: {
-          'X-User-UID': userUid,
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        'https://lingosummarapi.onrender.com/api/v1/texts/user',
+        {
+          method: 'GET',
+          headers: {
+            'X-User-UID': userUid,
+            'Content-Type': 'application/json',
+          },
         },
-      });
+      );
       if (!response.ok) throw new Error('Failed to fetch summaries');
       const data = await response.json();
-      console.log(data);
       setSummaries(data);
     } catch (err) {
       console.error('Error fetching summaries:', err);
@@ -36,11 +38,14 @@ const App = () => {
     const uid = saveSummaries ? localStorage.getItem('userUid') : '';
     setIsSavingEnabled(saveSummaries);
     setUserUid(uid);
+  }, []); // Removed userUid from dependencies to prevent re-triggering
 
-    if (saveSummaries && uid) {
+  useEffect(() => {
+    if (userUid) {
+      // Ensure userUid is not empty
       fetchSummaries();
     }
-  }, [userUid]); // Add userUid as a dependency to refetch summaries if it changes
+  }, [userUid]); // Depend on userUid to trigger the fetch when it's set
 
   return (
     <div className="flex flex-col h-screen w-full">
