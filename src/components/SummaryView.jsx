@@ -32,7 +32,9 @@ const SummaryView = ({ summaries }) => {
   async function fetchSummary(id) {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/v1/text/summary/${id}`);
+      const response = await fetch(
+        `https://www.api.lingosummar.com/api/v1/text/summary/${id}`,
+      );
       if (!response.ok) throw new Error('Failed to fetch summary');
       const data = await response.json();
       setCurrentSummary(data);
@@ -46,11 +48,14 @@ const SummaryView = ({ summaries }) => {
   async function summarizeAgain() {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/v1/summarize-again/${id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ percentage: Number(percentage) }),
-      });
+      const response = await fetch(
+        `https://www.api.lingosummar.com/api/v1/summarize-again/${id}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ percentage: Number(percentage) }),
+        },
+      );
       if (!response.ok) throw new Error('Failed to fetch summary');
       const data = await response.json();
       handleSummarizeAgain(data.summary);

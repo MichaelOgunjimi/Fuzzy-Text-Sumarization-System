@@ -15,7 +15,7 @@ const App = () => {
     try {
       if (!userUid) throw new Error('User UID is not set.');
       const response = await fetch(
-        'https://lingosummarapi.onrender.com/api/v1/texts/user',
+        'https://www.api.lingosummar.com/api/v1/texts/user',
         {
           method: 'GET',
           headers: {
