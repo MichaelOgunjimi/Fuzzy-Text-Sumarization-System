@@ -46,7 +46,7 @@ const SummaryForm = ({ summaries, isSavingEnabled, isLoading }) => {
         </p>
       )}
       <h1 className="text-3xl font-bold text-primary-700 mb-2">
-        Welcome to LingoSummer!
+        Welcome to LingoSummar!
       </h1>
       <p className="text-lg text-text-500 mb-2">
         Quickly summarize your documents or text right here.
