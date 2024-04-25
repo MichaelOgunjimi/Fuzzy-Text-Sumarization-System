@@ -124,7 +124,7 @@ const MainContent = ({
           className="flex-1 overflow-auto scrollbar h-full bg-background-100 p-5"
           ref={summaryContentRef}
         >
-          {currentSummary.length === 0 ? (
+          {isLoading ? (
             <Spinner size={3} />
           ) : (
             currentSummary && (

@@ -1,5 +1,5 @@
 [[redirects]]
-from = "/api/:path*"
-to = "https://www.api.lingosummar.com/api/:path*"
+from = "/api/*"
+to = "https://www.api.lingosummar.com/api/:splat"
 status = 200
 force = true
