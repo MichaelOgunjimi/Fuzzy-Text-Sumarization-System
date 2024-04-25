@@ -1,0 +1,5 @@
+[[redirects]]
+from = "/api/:path*"
+to = "https://www.api.lingosummar.com/api/:path*"
+status = 200
+force = true
