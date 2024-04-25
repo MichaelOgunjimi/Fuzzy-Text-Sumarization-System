@@ -129,45 +129,43 @@ const MainContent = ({
           className="flex-1 overflow-auto scrollbar h-full bg-background-100 p-5"
           ref={summaryContentRef}
         >
-          {isLoading ? (
-            <Spinner size={3} />
-          ) : (
-            currentSummary && (
-              <>
-                <Summary
-                  summary={{
-                    text: currentSummary.text,
-                    created_at: currentSummary.created_at,
-                    uploaded_filename: currentSummary.uploaded_filename,
-                  }}
-                  isOriginal={true}
-                />
-                {currentSummary.summaries &&
-                  currentSummary.summaries.map((summary, index) => {
-                    const isLatestOrOnly =
-                      (lastUpdated &&
-                        summary.timestamp &&
-                        new Date(summary.timestamp).getTime() ===
-                          lastUpdated.getTime()) ||
-                      currentSummary.summaries.length === 1;
+          {currentSummary.length === 0
+            ? null
+            : currentSummary && (
+                <>
+                  <Summary
+                    summary={{
+                      text: currentSummary.text,
+                      created_at: currentSummary.created_at,
+                      uploaded_filename: currentSummary.uploaded_filename,
+                    }}
+                    isOriginal={true}
+                  />
+                  {currentSummary.summaries &&
+                    currentSummary.summaries.map((summary, index) => {
+                      const isLatestOrOnly =
+                        (lastUpdated &&
+                          summary.timestamp &&
+                          new Date(summary.timestamp).getTime() ===
+                            lastUpdated.getTime()) ||
+                        currentSummary.summaries.length === 1;
 
-                    return isLatestOrOnly ? (
-                      <TypingSummary
-                        key={summary.id}
-                        summary={summary}
-                        onTypingComplete={typingComplete}
-                      />
-                    ) : (
-                      <Summary
-                        key={summary.id}
-                        summary={summary}
-                        isOriginal={false}
-                      />
-                    );
-                  })}
-              </>
-            )
-          )}
+                      return isLatestOrOnly ? (
+                        <TypingSummary
+                          key={summary.id}
+                          summary={summary}
+                          onTypingComplete={typingComplete}
+                        />
+                      ) : (
+                        <Summary
+                          key={summary.id}
+                          summary={summary}
+                          isOriginal={false}
+                        />
+                      );
+                    })}
+                </>
+              )}
           {isLoading && (
             <div className="flex items-center justify-start gap-4 align-center">
               <Spinner size={3} />
