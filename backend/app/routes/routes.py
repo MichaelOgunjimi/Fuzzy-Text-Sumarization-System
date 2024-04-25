@@ -257,6 +257,9 @@ def summarize():
     summary = summarizer.summarize()
     words = len(summary.split())
 
+    # print the summary to the console
+    # sys.stdout.write(f"Summary: {summary}\n")
+
     # Save the summary to the database, linked to the original text
     new_summary = Summary.create_summary(
         content=summary,
@@ -302,6 +305,9 @@ def summarize(text_id):
     summarizer = TextSummarizer(original_text.content, percentage, 8)
     summary = summarizer.summarize()
     words = len(summary.split())
+
+    # print the summary to the console
+    # sys.stdout.write(f"Summary: {summary}\n")
 
     # Save the summary to the database, linked to the original text
     summary = Summary.create_summary(content=summary, percentage=percentage, words=words, text=original_text)

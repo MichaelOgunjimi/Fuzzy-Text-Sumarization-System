@@ -10,22 +10,19 @@ const App = () => {
   const [isSavingEnabled, setIsSavingEnabled] = useState(false);
   const [userUid, setUserUid] = useState('');
   const [summaries, setSummaries] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchSummaries = async () => {
-    setIsLoading((prevState) => !prevState);
+    setIsLoading(true);
     try {
       if (!userUid) throw new Error('User UID is not set.');
-      const response = await fetch(
-        'https://www.api.lingosummar.com/api/v1/texts/user',
-        {
-          method: 'GET',
-          headers: {
-            'X-User-UID': userUid,
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch('/api/v1/texts/user', {
+        method: 'GET',
+        headers: {
+          'X-User-UID': userUid,
+          'Content-Type': 'application/json',
         },
-      );
+      });
       if (!response.ok) throw new Error('Failed to fetch summaries');
       const data = await response.json();
       setSummaries(data);
@@ -33,7 +30,7 @@ const App = () => {
       console.error('Error fetching summaries:', err);
       // Optionally update the UI to show an error message
     } finally {
-      setIsLoading((prevState) => !prevState);
+      setIsLoading(false); // Ensure isLoading is always set to false
     }
   };
 
@@ -42,14 +39,13 @@ const App = () => {
     const uid = saveSummaries ? localStorage.getItem('userUid') : '';
     setIsSavingEnabled(saveSummaries);
     setUserUid(uid);
-  }, []); // Removed userUid from dependencies to prevent re-triggering
+  }, []);
 
   useEffect(() => {
     if (userUid) {
-      // Ensure userUid is not empty
       fetchSummaries();
     }
-  }, [userUid]); // Depend on userUid to trigger the fetch when it's set
+  }, [userUid]);
 
   return (
     <div className="flex flex-col h-screen w-full">
