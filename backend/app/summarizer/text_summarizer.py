@@ -2,11 +2,11 @@ import os
 
 from rouge import Rouge
 
-from app.summarizer.clustering import TextClusterer
-from app.summarizer.feature_extraction import FeatureExtractor
-from app.summarizer.fuzzy_logic import FuzzyLogicSummarizer
-from app.summarizer.preprocessing import Preprocessor
-from app.summarizer.utils.helpers import resource_loader, mem_funcs, output_funcs
+from backend.app.summarizer.clustering import TextClusterer
+from backend.app.summarizer.feature_extraction import FeatureExtractor
+from backend.app.summarizer.fuzzy_logic import FuzzyLogicSummarizer
+from backend.app.summarizer.preprocessing import Preprocessor
+from backend.app.summarizer.utils.helpers import resource_loader, mem_funcs, output_funcs
 
 
 class TextSummarizer:
@@ -58,23 +58,23 @@ class TextSummarizer:
 
 
 # Example usage
-# # Correct paths to resources
-# current_dir = os.path.dirname(__file__)
-# input_text_path = os.path.join(current_dir, 'resources', 'input-text.txt')
-# reference_text_path = os.path.join(current_dir, 'resources', 'reference-text.txt')
-#
-# # Read the files
-# with open(input_text_path, 'r', encoding='utf-8') as file:
-#     test_text = file.read()
-#
-# summarized_text = TextSummarizer(test_text, 74, 8)  # Assuming TextSummarizer is properly defined
-# summary_text = summarized_text.summarize()
-# print("Summary: ", summary_text)
-#
-# # Calculate ROUGE scores
-# with open(reference_text_path, 'r', encoding='utf-8') as file:
-#     reference_text = file.read()
-#
-# rouge = Rouge()
-# scores = rouge.get_scores(summary_text, reference_text)
-# print(scores)
+# Correct paths to resources
+current_dir = os.path.dirname(__file__)
+input_text_path = os.path.join(current_dir, 'resources', 'input-text.txt')
+reference_text_path = os.path.join(current_dir, 'resources', 'reference-text.txt')
+
+# Read the files
+with open(input_text_path, 'r', encoding='utf-8') as file:
+    test_text = file.read()
+
+summarized_text = TextSummarizer(test_text, 74, 8)  # Assuming TextSummarizer is properly defined
+summary_text = summarized_text.summarize()
+print("Summary: ", summary_text)
+
+# Calculate ROUGE scores
+with open(reference_text_path, 'r', encoding='utf-8') as file:
+    reference_text = file.read()
+
+rouge = Rouge()
+scores = rouge.get_scores(summary_text, reference_text)
+print(scores)
