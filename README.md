@@ -32,7 +32,7 @@ Text Summarizer is a web application that allows users to summarize text documen
 
 To run the Text Summarizer application locally, follow these steps:
 
-1. Clone the repository: git clone https://github.com/your-username/textsummarizer.git
+1. Clone the repository: git clone https://github.com/michaelogunjimi/textsummarizer.git
 
 2. Navigate to the project directory: cd textsummarizer
 
